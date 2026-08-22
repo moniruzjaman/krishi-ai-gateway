@@ -1,0 +1,10 @@
+{
+  "name": "krishi-ai-gateway",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241224.0",
+    "typescript": "^5.0.0",
+    "wrangler": "^3.90.0"
+  }
+}
