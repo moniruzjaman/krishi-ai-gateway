@@ -1,0 +1,11 @@
+name = "krishi-ai-gateway"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[routes]]
+pattern = "api.krishiai.live/*"
+zone_name = "krishiai.live"
+
+[vars]
+ENVIRONMENT = "production"
