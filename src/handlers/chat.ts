@@ -1,25 +1,26 @@
-import { Env } from "../index";
-import { corsHeaders, errorResponse } from "../utils";
+import type { Env } from "../utils";
+import { corsHeadersFor, errorResponse, isAuthorized } from "../utils";
+import { checkRateLimit } from "../rateLimit";
 
 const RULES: Record<string, { bn: string; en: string }> = {
-  "ধান|rice|paddy|boro|aman": {
-    bn: "BRRI পরামর্শ: বোরো মৌসুমে BRRI ধান-28 বা 29 ব্যবহার করুন। বিঘা প্রতি ইউরিয়া ১৩কেজি, TSP ৭কেজি, MOP ১০কেজি।",
+  "\u09A7\u09BE\u09A8|rice|paddy|boro|aman": {
+    bn: "BRRI \u09AA\u09B0\u09BE\u09AE\u09B0\u09CD\u09B6: \u09AC\u09CB\u09B0\u09CB \u09AE\u09CC\u09B8\u09C1\u09AE\u09C7 BRRI \u09A7\u09BE\u09A8-28 \u09AC\u09BE 29 \u09AC\u09CD\u09AF\u09AC\u09B9\u09BE\u09B0 \u0995\u09B0\u09C1\u09A8\u0964 \u09AC\u09BF\u0998\u09BE \u09AA\u09CD\u09B0\u09A4\u09BF \u0987\u0989\u09B0\u09BF\u09AF\u09BC\u09BE \u09E7\u09E9\u0995\u09C7\u099C\u09BF, TSP \u09ED\u0995\u09C7\u099C\u09BF, MOP \u09E7\u09E6\u0995\u09C7\u099C\u09BF\u0964",
     en: "BRRI: Use BRRI dhan-28 or 29 for Boro. Apply urea 13kg, TSP 7kg, MOP 10kg per bigha.",
   },
-  "সার|fertilizer|urea": {
-    bn: "সার প্রয়োগ: TSP ও MOP রোপণের আগে দিন। ইউরিয়া ১৫, ৩০, ৪৫ দিন পর তিনভাগে দিন।",
+  "\u09B8\u09BE\u09B0|fertilizer|urea": {
+    bn: "\u09B8\u09BE\u09B0 \u09AA\u09CD\u09B0\u09AF\u09BC\u09CB\u0997: TSP \u0993 MOP \u09B0\u09CB\u09AA\u09A3\u09C7\u09B0 \u0986\u0997\u09C7 \u09A6\u09BF\u09A8\u0964 \u0987\u0989\u09B0\u09BF\u09AF\u09BC\u09BE \u09E7\u09EB, \u09E9\u09E6, \u09EA\u09EB \u09A6\u09BF\u09A8 \u09AA\u09B0 \u09A4\u09BF\u09A8\u09AD\u09BE\u0997\u09C7 \u09A6\u09BF\u09A8\u0964",
     en: "Apply TSP and MOP before transplanting. Split urea in 3 doses at 15, 30, 45 days.",
   },
-  "রোগ|পোকা|disease|pest|blast|blight": {
-    bn: "ব্লাস্ট রোগে ট্রাইসাইক্লাজল ব্যবহার করুন। DAE উপজেলা অফিসে যোগাযোগ করুন।",
+  "\u09B0\u09CB\u0997|\u09AA\u09CB\u0995\u09BE|disease|pest|blast|blight": {
+    bn: "\u09AC\u09CD\u09B2\u09BE\u09B8\u09CD\u099F \u09B0\u09CB\u0997\u09C7 \u099F\u09CD\u09B0\u09BE\u0987\u09B8\u09BE\u0987\u0995\u09CD\u09B2\u09BE\u099C\u09B2 \u09AC\u09CD\u09AF\u09AC\u09B9\u09BE\u09B0 \u0995\u09B0\u09C1\u09A8\u0964 DAE \u0989\u09AA\u099C\u09C7\u09B2\u09BE \u0985\u09AB\u09BF\u09B8\u09C7 \u09AF\u09CB\u0997\u09BE\u09AF\u09CB\u0997 \u0995\u09B0\u09C1\u09A8\u0964",
     en: "For blast disease use tricyclazole. Contact local DAE Upazila office.",
   },
-  "আলু|potato": {
-    bn: "BARI আলু-৭ বা ৮ ব্যবহার করুন। নভেম্বর-জানুয়ারি রোপণের সময়।",
+  "\u0986\u09B2\u09C1|potato": {
+    bn: "BARI \u0986\u09B2\u09C1-\u09ED \u09AC\u09BE \u09EE \u09AC\u09CD\u09AF\u09AC\u09B9\u09BE\u09B0 \u0995\u09B0\u09C1\u09A8\u0964 \u09A8\u09AD\u09C7\u09AE\u09CD\u09AC\u09B0-\u099C\u09BE\u09A8\u09C1\u09AF\u09BC\u09BE\u09B0\u09BF \u09B0\u09CB\u09AA\u09A3\u09C7\u09B0 \u09B8\u09AE\u09AF\u09BC\u0964",
     en: "Use BARI Alu-7 or 8. Plant November to January.",
   },
-  "আবহাওয়া|weather|বৃষ্টি|rain": {
-    bn: "আবহাওয়া তথ্যের জন্য /v1/weather এন্ডপয়েন্ট ব্যবহার করুন।",
+  "\u0986\u09AC\u09B9\u09BE\u0993\u09AF\u09BC\u09BE|weather|\u09AC\u09C3\u09B7\u09CD\u099F\u09BF|rain": {
+    bn: "\u0986\u09AC\u09B9\u09BE\u0993\u09AF\u09BC\u09BE \u09A4\u09A5\u09CD\u09AF\u09C7\u09B0 \u099C\u09A8\u09CD\u09AF /v1/weather \u098F\u09A8\u09CD\u09A1\u09AA\u09AF\u09BC\u09C7\u09A8\u09CD\u099F \u09AC\u09CD\u09AF\u09AC\u09B9\u09BE\u09B0 \u0995\u09B0\u09C1\u09A8\u0964",
     en: "Use the /v1/weather endpoint for live weather and pest risk data.",
   },
 };
@@ -32,7 +33,7 @@ function ruleBasedResponse(message: string, lang: string): string {
     }
   }
   return lang === "bn"
-    ? "DAE হটলাইনে কল করুন: 16123"
+    ? "DAE \u09B9\u099F\u09B2\u09BE\u0987\u09A8\u09C7 \u0995\u09B2 \u0995\u09B0\u09C1\u09A8: \u09E7\u09EC\u09E7\u09E8\u09E9"
     : "Call DAE hotline: 16123";
 }
 
@@ -67,7 +68,10 @@ async function callOpenRouter(apiKey: string, model: string, message: string, sy
     },
     body: JSON.stringify({
       model,
-      messages: [{ role: "system", content: systemPrompt }, { role: "user", content: message }],
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: message },
+      ],
       max_tokens: 400,
     }),
   });
@@ -79,16 +83,26 @@ async function callOpenRouter(apiKey: string, model: string, message: string, sy
 }
 
 export async function handleChat(request: Request, env: Env): Promise<Response> {
-  const body: any = await request.json();
+  if (!isAuthorized(request, env)) {
+    return errorResponse(request, "Unauthorized \u2014 missing or invalid X-Krishi-Token", 401);
+  }
+  const rateLimit = await checkRateLimit(request, env, "chat");
+  if (!rateLimit.allowed) {
+    return errorResponse(request, "Rate limit exceeded \u2014 try again in a minute", 429);
+  }
+
+  const body = (await request.json()) as { message?: string; language?: string };
   const message = body.message?.trim();
   const language = body.language ?? "bn";
-  if (!message) return errorResponse("message required", 400);
+  if (!message) return errorResponse(request, "message required", 400);
 
-  const systemPrompt = language === "bn"
-    ? "আপনি কৃষি AI। BRRI, BARI, DAE মানদণ্ড অনুসরণ করে সহজ বাংলায় সর্বোচ্চ ১৫০ শব্দে উত্তর দিন।"
-    : "You are Krishi AI. Answer in under 150 words following BRRI, BARI, DAE standards.";
+  const systemPrompt =
+    language === "bn"
+      ? "\u0986\u09AA\u09A8\u09BF \u0995\u09C3\u09B7\u09BF AI\u0964 BRRI, BARI, DAE \u09AE\u09BE\u09A8\u09A6\u09A3\u09CD\u09A1 \u0985\u09A8\u09C1\u09B8\u09B0\u09A3 \u0995\u09B0\u09C7 \u09B8\u09B9\u099C \u09AC\u09BE\u0982\u09B2\u09BE\u09AF\u09BC \u09B8\u09B0\u09CD\u09AC\u09CB\u099A\u09CD\u099A \u09E7\u09EB\u09E6 \u09B6\u09AC\u09CD\u09A6\u09C7 \u0989\u09A4\u09CD\u09A4\u09B0 \u09A6\u09BF\u09A8\u0964"
+      : "You are Krishi AI. Answer in under 150 words following BRRI, BARI, DAE standards.";
 
-  const timeout = (p: Promise<any>) => Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error("timeout")), 8000))]);
+  const timeout = <T>(p: Promise<T>): Promise<T> =>
+    Promise.race([p, new Promise<T>((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000))]);
 
   // Every tier below is free of charge:
   // - Gemini: free-tier Google AI Studio key (generativelanguage.googleapis.com), rate-limited, no billing.
@@ -105,12 +119,20 @@ export async function handleChat(request: Request, env: Env): Promise<Response> 
 
   for (const step of chain) {
     try {
-      const reply = await timeout(step.fn()) as string;
-      return new Response(JSON.stringify({ reply, model: step.name, tier: step.tier, fallback: step.tier > 1 }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    } catch (_) { continue; }
+      const reply = await timeout(step.fn());
+      return new Response(
+        JSON.stringify({ reply, model: step.name, tier: step.tier, fallback: step.tier > 1 }),
+        {
+          headers: {
+            ...corsHeadersFor(request),
+            "Content-Type": "application/json",
+            "X-RateLimit-Remaining": String(rateLimit.remaining),
+          },
+        }
+      );
+    } catch {
+      continue;
+    }
   }
-
-  return errorResponse("All tiers failed", 503);
+  return errorResponse(request, "All tiers failed", 503);
 }
