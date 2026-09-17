@@ -90,10 +90,16 @@ export async function handleChat(request: Request, env: Env): Promise<Response> 
 
   const timeout = (p: Promise<any>) => Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error("timeout")), 8000))]);
 
+  // Every tier below is free of charge:
+  // - Gemini: free-tier Google AI Studio key (generativelanguage.googleapis.com), rate-limited, no billing.
+  // - OpenRouter tiers: only ":free"-suffixed / $0 models. "openrouter/free" is OpenRouter's
+  //   auto-router across whatever free models are currently available, so it keeps working even
+  //   if a specific free model is retired. Never pass a paid model id here.
+  // - rule-based: no API call at all.
   const chain = [
     { name: "gemini-2.0-flash", tier: 1, fn: () => callGemini(env.GEMINI_API_KEY, message, systemPrompt) },
-    { name: "gemini-1.5-flash", tier: 2, fn: () => callOpenRouter(env.OPENROUTER_API_KEY, "google/gemini-flash-1.5", message, systemPrompt) },
-    { name: "llama-3.1-8b", tier: 3, fn: () => callOpenRouter(env.OPENROUTER_API_KEY, "meta-llama/llama-3.1-8b-instruct:free", message, systemPrompt) },
+    { name: "nex-n2.5-pro-free", tier: 2, fn: () => callOpenRouter(env.OPENROUTER_API_KEY, "nex-agi/nex-n2.5-pro:free", message, systemPrompt) },
+    { name: "openrouter-free-router", tier: 3, fn: () => callOpenRouter(env.OPENROUTER_API_KEY, "openrouter/free", message, systemPrompt) },
     { name: "rule-based", tier: 4, fn: () => Promise.resolve(ruleBasedResponse(message, language)) },
   ];
 

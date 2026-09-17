@@ -1,4 +1,4 @@
-import { corsHeaders, errorResponse } from "./utils";
+import { corsHeaders, errorResponse, isAuthorized } from "./utils";
 
 export interface Env {
   GEMINI_API_KEY: string;
@@ -22,6 +22,13 @@ export default {
         version: "1.1.0",
         endpoints: ["/v1/chat", "/v1/weather", "/v1/storage/:ns/:key"],
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Every /v1/* route requires X-Krishi-Token to match GATEWAY_SECRET
+    // (when GATEWAY_SECRET is configured). Prevents strangers from burning
+    // through the free-tier AI quota or reading/writing KV storage.
+    if (path.startsWith("/v1/") && !isAuthorized(request, env.GATEWAY_SECRET)) {
+      return errorResponse("Unauthorized", 401);
     }
 
     if (path === "/v1/chat" && request.method === "POST") {

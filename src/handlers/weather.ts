@@ -39,7 +39,7 @@ export async function handleWeather(request: Request, env: Env): Promise<Respons
     spray_safe: d.wind_max <= 20 && d.rain_mm < 5,
   }));
 
-  const advisory = d => {
+  const advisory = (d: { rain_mm: number }) => {
     if (d.rain_mm > 20) return "⚠️ ভারী বৃষ্টি — সেচ বন্ধ রাখুন";
     if (d.rain_mm < 2) return "💧 বৃষ্টি কম — সেচ দিন";
     return "✅ আবহাওয়া স্বাভাবিক";
