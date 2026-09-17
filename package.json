@@ -2,9 +2,10 @@
   "name": "krishi-ai-gateway",
   "version": "1.0.0",
   "private": true,
+  "license": "ISC",
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20241224.0",
-    "typescript": "^5.0.0",
-    "wrangler": "^3.90.0"
+    "@cloudflare/workers-types": "^5.20260822.1",
+    "typescript": "^7.0.2",
+    "wrangler": "^4.125.0"
   }
 }
