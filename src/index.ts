@@ -1,27 +1,27 @@
-import { corsHeaders, errorResponse } from "./utils";
+import type { Env } from "./utils";
+import { corsHeadersFor, errorResponse } from "./utils";
 
-export interface Env {
-  GEMINI_API_KEY: string;
-  OPENROUTER_API_KEY: string;
-  GATEWAY_SECRET?: string;
-  KRISHI_KV: KVNamespace;
-}
+export type { Env };
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     if (request.method === "OPTIONS") {
-      return new Response(null, { headers: corsHeaders });
+      return new Response(null, { headers: corsHeadersFor(request) });
     }
+
     const url = new URL(request.url);
     const path = url.pathname;
 
     if (path === "/" || path === "/health") {
-      return new Response(JSON.stringify({
-        status: "ok",
-        service: "Krishi AI Gateway",
-        version: "1.1.0",
-        endpoints: ["/v1/chat", "/v1/weather", "/v1/storage/:ns/:key"],
-      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(
+        JSON.stringify({
+          status: "ok",
+          service: "Krishi AI Gateway",
+          version: "1.3.0",
+          endpoints: ["/v1/chat", "/v1/weather", "/v1/storage/:ns/:key"],
+        }),
+        { headers: { ...corsHeadersFor(request), "Content-Type": "application/json" } }
+      );
     }
 
     if (path === "/v1/chat" && request.method === "POST") {
@@ -40,6 +40,6 @@ export default {
       return handleStorage(request, env, storageMatch[1], storageMatch[2] || undefined);
     }
 
-    return errorResponse("Not found", 404);
+    return errorResponse(request, "Not found", 404);
   },
 };

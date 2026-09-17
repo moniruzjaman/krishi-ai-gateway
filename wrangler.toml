@@ -9,3 +9,7 @@ zone_name = "krishiai.live"
 
 [vars]
 ENVIRONMENT = "production"
+
+[[kv_namespaces]]
+binding = "KRISHI_KV"
+id = "366ebccefc354a67b95ad90b53aa0f5e"
