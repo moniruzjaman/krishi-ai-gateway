@@ -13,3 +13,7 @@ ENVIRONMENT = "production"
 [[kv_namespaces]]
 binding = "KRISHI_KV"
 id = "366ebccefc354a67b95ad90b53aa0f5e"
+
+[observability.logs]
+enabled = true
+invocation_logs = true
