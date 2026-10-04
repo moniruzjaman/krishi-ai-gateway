@@ -1,0 +1,35 @@
+// Offline rule-based answers: last-resort tier when every AI provider fails (no API call).
+const RULES: Record<string, { bn: string; en: string }> = {
+  "\u09A7\u09BE\u09A8|rice|paddy|boro|aman": {
+    bn: "BRRI \u09AA\u09B0\u09BE\u09AE\u09B0\u09CD\u09B6: \u09AC\u09CB\u09B0\u09CB \u09AE\u09CC\u09B8\u09C1\u09AE\u09C7 BRRI \u09A7\u09BE\u09A8-28 \u09AC\u09BE 29 \u09AC\u09CD\u09AF\u09AC\u09B9\u09BE\u09B0 \u0995\u09B0\u09C1\u09A8\u0964 \u09AC\u09BF\u0998\u09BE \u09AA\u09CD\u09B0\u09A4\u09BF \u0987\u0989\u09B0\u09BF\u09AF\u09BC\u09BE \u09E7\u09E9\u0995\u09C7\u099C\u09BF, TSP \u09ED\u0995\u09C7\u099C\u09BF, MOP \u09E7\u09E6\u0995\u09C7\u099C\u09BF\u0964",
+    en: "BRRI: Use BRRI dhan-28 or 29 for Boro. Apply urea 13kg, TSP 7kg, MOP 10kg per bigha.",
+  },
+  "\u09B8\u09BE\u09B0|fertilizer|urea": {
+    bn: "\u09B8\u09BE\u09B0 \u09AA\u09CD\u09B0\u09AF\u09BC\u09CB\u0997: TSP \u0993 MOP \u09B0\u09CB\u09AA\u09A3\u09C7\u09B0 \u0986\u0997\u09C7 \u09A6\u09BF\u09A8\u0964 \u0987\u0989\u09B0\u09BF\u09AF\u09BC\u09BE \u09E7\u09EB, \u09E9\u09E6, \u09EA\u09EB \u09A6\u09BF\u09A8 \u09AA\u09B0 \u09A4\u09BF\u09A8\u09AD\u09BE\u0997\u09C7 \u09A6\u09BF\u09A8\u0964",
+    en: "Apply TSP and MOP before transplanting. Split urea in 3 doses at 15, 30, 45 days.",
+  },
+  "\u09B0\u09CB\u0997|\u09AA\u09CB\u0995\u09BE|disease|pest|blast|blight": {
+    bn: "\u09AC\u09CD\u09B2\u09BE\u09B8\u09CD\u099F \u09B0\u09CB\u0997\u09C7 \u099F\u09CD\u09B0\u09BE\u0987\u09B8\u09BE\u0987\u0995\u09CD\u09B2\u09BE\u099C\u09B2 \u09AC\u09CD\u09AF\u09AC\u09B9\u09BE\u09B0 \u0995\u09B0\u09C1\u09A8\u0964 DAE \u0989\u09AA\u099C\u09C7\u09B2\u09BE \u0985\u09AB\u09BF\u09B8\u09C7 \u09AF\u09CB\u0997\u09BE\u09AF\u09CB\u0997 \u0995\u09B0\u09C1\u09A8\u0964",
+    en: "For blast disease use tricyclazole. Contact local DAE Upazila office.",
+  },
+  "\u0986\u09B2\u09C1|potato": {
+    bn: "BARI \u0986\u09B2\u09C1-\u09ED \u09AC\u09BE \u09EE \u09AC\u09CD\u09AF\u09AC\u09B9\u09BE\u09B0 \u0995\u09B0\u09C1\u09A8\u0964 \u09A8\u09AD\u09C7\u09AE\u09CD\u09AC\u09B0-\u099C\u09BE\u09A8\u09C1\u09AF\u09BC\u09BE\u09B0\u09BF \u09B0\u09CB\u09AA\u09A3\u09C7\u09B0 \u09B8\u09AE\u09AF\u09BC\u0964",
+    en: "Use BARI Alu-7 or 8. Plant November to January.",
+  },
+  "\u0986\u09AC\u09B9\u09BE\u0993\u09AF\u09BC\u09BE|weather|\u09AC\u09C3\u09B7\u09CD\u099F\u09BF|rain": {
+    bn: "\u0986\u09AC\u09B9\u09BE\u0993\u09AF\u09BC\u09BE \u09A4\u09A5\u09CD\u09AF\u09C7\u09B0 \u099C\u09A8\u09CD\u09AF /v1/weather \u098F\u09A8\u09CD\u09A1\u09AA\u09AF\u09BC\u09C7\u09A8\u09CD\u099F \u09AC\u09CD\u09AF\u09AC\u09B9\u09BE\u09B0 \u0995\u09B0\u09C1\u09A8\u0964",
+    en: "Use the /v1/weather endpoint for live weather and pest risk data.",
+  },
+};
+
+export function ruleBasedResponse(message: string, lang: string): string {
+  const lower = message.toLowerCase();
+  for (const [pattern, response] of Object.entries(RULES)) {
+    if (new RegExp(pattern).test(lower)) {
+      return lang === "bn" ? response.bn : response.en;
+    }
+  }
+  return lang === "bn"
+    ? "DAE \u09B9\u099F\u09B2\u09BE\u0987\u09A8\u09C7 \u0995\u09B2 \u0995\u09B0\u09C1\u09A8: \u09E7\u09EC\u09E7\u09E8\u09E9"
+    : "Call DAE hotline: 16123";
+}

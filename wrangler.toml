@@ -9,6 +9,12 @@ zone_name = "krishiai.live"
 
 [vars]
 ENVIRONMENT = "production"
+SUPABASE_URL = "https://vlfyhgyowfhhujgywxud.supabase.co"
+# Claude/Grok have no free API tier: keep paid providers off unless explicitly enabled.
+ALLOW_PAID_PROVIDERS = "false"
+# Secrets (set with `npx wrangler secret put <NAME>`):
+#   GEMINI_API_KEY, GROQ_API_KEY, OPENROUTER_API_KEY, HF_TOKEN, SUPABASE_ANON_KEY, KRISHI_API_TOKEN
+#   optional (paid): ANTHROPIC_API_KEY, XAI_API_KEY
 
 [[kv_namespaces]]
 binding = "KRISHI_KV"

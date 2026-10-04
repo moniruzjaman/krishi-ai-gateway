@@ -1,8 +1,15 @@
 export interface Env {
-  GEMINI_API_KEY: string;
-  OPENROUTER_API_KEY: string;
+  GEMINI_API_KEY?: string;
+  OPENROUTER_API_KEY?: string;
   KRISHI_API_TOKEN?: string;
   KRISHI_KV: KVNamespace;
+  GROQ_API_KEY?: string;
+  HF_TOKEN?: string;
+  ANTHROPIC_API_KEY?: string;
+  XAI_API_KEY?: string;
+  SUPABASE_URL?: string;
+  SUPABASE_ANON_KEY?: string;
+  ALLOW_PAID_PROVIDERS?: string;
 }
 
 const ALLOWED_ORIGIN_SUFFIX = ".krishiai.live";
